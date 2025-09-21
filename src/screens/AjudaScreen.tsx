@@ -6,7 +6,13 @@ export default function AjudaScreen() {
     <View style={{ flex: 1, padding: 16, gap: 8 }}>
       <Text style={{ fontSize: 18, fontWeight: '600' }}>Ajuda</Text>
       <Text>
-        • Use o e-mail para entrar.\n• A sessão fica salva no dispositivo.\n• Se algo falhar, feche e reabra o app.
+        • Use o e-mail para entrar.
+      </Text>
+      <Text>
+        • A sessão fica salva no dispositivo.
+      </Text>
+      <Text>
+        • Se algo falhar, feche e reabra o app.
       </Text>
     </View>
   );
