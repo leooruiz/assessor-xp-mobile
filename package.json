@@ -6,7 +6,10 @@
     "start": "expo start",
     "android": "expo run:android",
     "ios": "expo run:ios",
-    "clean": "watchman watch-del-all || true && rm -rf node_modules && rm -rf $TMPDIR/metro-* && rm -rf $TMPDIR/haste-map-* && npm i"
+    "clean": "watchman watch-del-all || true && rm -rf node_modules && rm -rf $TMPDIR/metro-* && rm -rf $TMPDIR/haste-map-* && npm i",
+    "api": "npm --prefix api run dev",
+    "api:start": "npm --prefix api run start",
+    "dev:all": "npm --prefix api run dev & expo start"
   },
   "dependencies": {
     "@react-native-async-storage/async-storage": "^2.2.0",

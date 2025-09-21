@@ -1,0 +1,6 @@
+[
+  { "id": "tesouro_2029", "nome": "Tesouro Prefixado 2029", "classe": "renda_fixa" },
+  { "id": "cdb_liquidez", "nome": "CDB Liquidez Diária", "classe": "renda_fixa" },
+  { "id": "bova11", "nome": "ETF BOVA11", "classe": "renda_variavel" },
+  { "id": "itsa4", "nome": "Itaúsa PN", "classe": "renda_variavel" }
+]
