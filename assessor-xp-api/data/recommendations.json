@@ -74,5 +74,24 @@
       }
     ],
     "resumo": "Perfil moderado • Obj longo • Liq media"
+  },
+  {
+    "id": "rec_1758471005395",
+    "profileId": "p_1758468077296",
+    "items": [
+      {
+        "assetId": "tesouro_2029",
+        "nome": "Tesouro Prefixado 2029",
+        "peso": 0.5,
+        "xai": "Coerente com moderado"
+      },
+      {
+        "assetId": "bova11",
+        "nome": "ETF BOVA11",
+        "peso": 0.5,
+        "xai": "Coerente com moderado"
+      }
+    ],
+    "resumo": "Perfil moderado • Obj longo • Liq media"
   }
 ]
