@@ -1,17 +1,13 @@
 import React from "react";
 import { createBottomTabNavigator } from "@react-navigation/bottom-tabs";
+import HomeScreen from "../screens/HomeScreen";
 import PerfilScreen from "../screens/PerfilScreen";
 import RecomendacaoScreen from "../screens/RecomendacaoScreen";
 import ExplicacaoScreen from "../screens/ExplicacaoScreen";
 import AjudaScreen from "../screens/AjudaScreen";
-import { Text } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 
 const Tab = createBottomTabNavigator();
-
-function Placeholder() {
-  return <Text style={{ margin: 24 }}>Bem-vindo ao Assessor XP</Text>;
-}
 
 export default function HomeTabs() {
   return (
@@ -40,7 +36,7 @@ export default function HomeTabs() {
         tabBarInactiveTintColor: "gray",
       })}
     >
-      <Tab.Screen name="Início" component={Placeholder} />
+      <Tab.Screen name="Início" component={HomeScreen} />
       <Tab.Screen name="Perfil" component={PerfilScreen} />
       <Tab.Screen name="Recomendar" component={RecomendacaoScreen} />
       <Tab.Screen name="Explicações" component={ExplicacaoScreen} />
