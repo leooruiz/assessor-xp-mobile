@@ -7,8 +7,8 @@ import {
   ScrollView,
   TouchableOpacity,
   RefreshControl,
+  Modal,
 } from "react-native";
-import { Picker } from "@react-native-picker/picker";
 import { Ionicons } from "@expo/vector-icons";
 import { api, Profile } from "../services/api";
 
@@ -136,36 +136,101 @@ export default function PerfilScreen() {
     options: { label: string; value: string }[];
     getInfo: (type: string) => any;
   }) => {
+    const [modalVisible, setModalVisible] = useState(false);
     const currentInfo = getInfo(selectedValue);
+    const selectedOption = options.find((opt) => opt.value === selectedValue);
 
     return (
       <View style={styles.pickerContainer}>
         <Text style={styles.pickerTitle}>{title}</Text>
-        <View style={styles.pickerCard}>
-          <View style={styles.pickerWrapper}>
-            <Picker
-              selectedValue={selectedValue}
-              onValueChange={onValueChange}
-              style={styles.picker}
-            >
-              {options.map((option) => (
-                <Picker.Item
-                  key={option.value}
-                  label={option.label}
-                  value={option.value}
-                />
-              ))}
-            </Picker>
+        <TouchableOpacity
+          style={styles.pickerCard}
+          onPress={() => setModalVisible(true)}
+        >
+          <View style={styles.pickerDisplay}>
+            <View style={styles.selectedValueContainer}>
+              <Ionicons
+                name={currentInfo.icon}
+                size={24}
+                color={currentInfo.color || "#007AFF"}
+              />
+              <View style={styles.selectedTextContainer}>
+                <Text style={styles.selectedValueText}>
+                  {selectedOption?.label}
+                </Text>
+                <Text style={styles.selectedDescriptionText}>
+                  {currentInfo.description}
+                </Text>
+              </View>
+            </View>
+            <Ionicons name="chevron-down" size={20} color="#666" />
           </View>
-          <View style={styles.infoContainer}>
-            <Ionicons
-              name={currentInfo.icon}
-              size={24}
-              color={currentInfo.color || "#007AFF"}
-            />
-            <Text style={styles.infoText}>{currentInfo.description}</Text>
+        </TouchableOpacity>
+
+        <Modal
+          animationType="slide"
+          transparent={true}
+          visible={modalVisible}
+          onRequestClose={() => setModalVisible(false)}
+        >
+          <View style={styles.modalOverlay}>
+            <View style={styles.modalContent}>
+              <View style={styles.modalHeader}>
+                <Text style={styles.modalTitle}>{title}</Text>
+                <TouchableOpacity onPress={() => setModalVisible(false)}>
+                  <Ionicons name="close" size={24} color="#666" />
+                </TouchableOpacity>
+              </View>
+              <ScrollView style={styles.optionsList}>
+                {options.map((option) => {
+                  const optionInfo = getInfo(option.value);
+                  const isSelected = option.value === selectedValue;
+                  return (
+                    <TouchableOpacity
+                      key={option.value}
+                      style={[
+                        styles.optionItem,
+                        isSelected && styles.selectedOptionItem,
+                      ]}
+                      onPress={() => {
+                        onValueChange(option.value);
+                        setModalVisible(false);
+                      }}
+                    >
+                      <View style={styles.optionContent}>
+                        <Ionicons
+                          name={optionInfo.icon}
+                          size={24}
+                          color={optionInfo.color || "#007AFF"}
+                        />
+                        <View style={styles.optionTextContainer}>
+                          <Text
+                            style={[
+                              styles.optionLabel,
+                              isSelected && styles.selectedOptionLabel,
+                            ]}
+                          >
+                            {option.label}
+                          </Text>
+                          <Text style={styles.optionDescription}>
+                            {optionInfo.description}
+                          </Text>
+                        </View>
+                        {isSelected && (
+                          <Ionicons
+                            name="checkmark"
+                            size={20}
+                            color="#007AFF"
+                          />
+                        )}
+                      </View>
+                    </TouchableOpacity>
+                  );
+                })}
+              </ScrollView>
+            </View>
           </View>
-        </View>
+        </Modal>
       </View>
     );
   };
@@ -344,6 +409,7 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: "#f8f9fa",
+    position: "relative",
   },
   loadingContainer: {
     flex: 1,
@@ -433,9 +499,11 @@ const styles = StyleSheet.create({
   },
   formContainer: {
     padding: 20,
+    overflow: "visible",
   },
   pickerContainer: {
     marginBottom: 24,
+    position: "relative",
   },
   pickerTitle: {
     fontSize: 16,
@@ -451,24 +519,90 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.1,
     shadowRadius: 4,
     elevation: 3,
+    overflow: "hidden",
+    position: "relative",
   },
-  pickerWrapper: {
+  pickerDisplay: {
+    flexDirection: "row",
+    alignItems: "center",
+    padding: 16,
+    justifyContent: "space-between",
+  },
+  selectedValueContainer: {
+    flexDirection: "row",
+    alignItems: "center",
+    flex: 1,
+  },
+  selectedTextContainer: {
+    marginLeft: 12,
+    flex: 1,
+  },
+  selectedValueText: {
+    fontSize: 16,
+    fontWeight: "600",
+    color: "#1a1a1a",
+    marginBottom: 2,
+  },
+  selectedDescriptionText: {
+    fontSize: 14,
+    color: "#666",
+  },
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: "rgba(0, 0, 0, 0.5)",
+    justifyContent: "flex-end",
+  },
+  modalContent: {
+    backgroundColor: "white",
+    borderTopLeftRadius: 20,
+    borderTopRightRadius: 20,
+    maxHeight: "80%",
+  },
+  modalHeader: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    padding: 20,
     borderBottomWidth: 1,
     borderBottomColor: "#f0f0f0",
   },
-  picker: {
-    height: 50,
+  modalTitle: {
+    fontSize: 18,
+    fontWeight: "600",
+    color: "#1a1a1a",
   },
-  infoContainer: {
+  optionsList: {
+    maxHeight: 400,
+  },
+  optionItem: {
+    borderBottomWidth: 1,
+    borderBottomColor: "#f0f0f0",
+  },
+  selectedOptionItem: {
+    backgroundColor: "#f8f9ff",
+  },
+  optionContent: {
     flexDirection: "row",
     alignItems: "center",
     padding: 16,
   },
-  infoText: {
-    fontSize: 14,
-    color: "#666",
+  optionTextContainer: {
     marginLeft: 12,
     flex: 1,
+  },
+  optionLabel: {
+    fontSize: 16,
+    fontWeight: "500",
+    color: "#1a1a1a",
+    marginBottom: 2,
+  },
+  selectedOptionLabel: {
+    color: "#007AFF",
+    fontWeight: "600",
+  },
+  optionDescription: {
+    fontSize: 14,
+    color: "#666",
   },
   summaryContainer: {
     marginBottom: 24,
