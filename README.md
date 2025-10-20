@@ -1,4 +1,4 @@
-# Assessor XP — Mobile (Sprint 3)
+# Assessor XP — Mobile (Sprint 4)
 
 Aplicativo em React Native (Expo) para o Case 2 — Assessor Virtual de Investimentos.
 Inclui também uma API local em Node/Express (pasta `assessor-xp-api`) para fornecer os dados de perfis e recomendações.

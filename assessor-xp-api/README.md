@@ -22,5 +22,5 @@
 
 ## Observações
 
-- Persistência em arquivos JSON, adequada para uso **local** nesta Sprint 3.
+- Persistência em arquivos JSON, adequada para uso **local** nesta Sprint 4.
 - Regras de recomendação simples (adequadas ao perfil). Evoluiremos depois.
