@@ -25,7 +25,6 @@ export default function AjudaScreen() {
     setRefreshing(true);
     setTimeout(() => setRefreshing(false), 1000);
   };
-
   const toggleFAQ = (id: string) => {
     const newExpanded = new Set(expandedFAQ);
     if (newExpanded.has(id)) {
@@ -168,7 +167,7 @@ export default function AjudaScreen() {
             <Text style={styles.appInfoItem}>📱 Versão: 1.0.0</Text>
             <Text style={styles.appInfoItem}>🔄 Última atualização: Hoje</Text>
             <Text style={styles.appInfoItem}>🏢 XP Investimentos</Text>
-            <Text style={styles.appInfoItem}>📧 Sprint 3 - Mobile</Text>
+            <Text style={styles.appInfoItem}>📧 Sprint 4 - Mobile</Text>
           </View>
         </View>
       </View>

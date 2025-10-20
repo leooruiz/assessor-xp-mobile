@@ -2,7 +2,6 @@ import React, { useEffect, useState } from "react";
 import {
   View,
   Text,
-  Alert,
   StyleSheet,
   ScrollView,
   TouchableOpacity,
@@ -10,7 +9,17 @@ import {
   Dimensions,
 } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
-import { api, Profile, Recommendation } from "../services/api";
+import {
+  api,
+  Profile,
+  Recommendation,
+  getErrorMessage,
+  NetworkError,
+  APIError,
+} from "../services/api";
+import ErrorView from "../components/ErrorView";
+import Toast from "../components/Toast";
+import { useToast } from "../hooks/useToast";
 
 const { width } = Dimensions.get("window");
 
@@ -20,16 +29,34 @@ export default function RecomendacaoScreen() {
   const [loading, setLoading] = useState(false);
   const [refreshing, setRefreshing] = useState(false);
   const [selectedProfileIndex, setSelectedProfileIndex] = useState(0);
+  const [error, setError] = useState<{
+    message: string;
+    type: "network" | "server" | "general";
+  } | null>(null);
+  const { toasts, showError, showSuccess, showWarning, hideToast } = useToast();
 
   async function loadProfiles() {
     try {
+      setError(null);
       const list = await api.listProfiles();
       setProfiles(list);
-    } catch {
-      Alert.alert(
-        "Erro",
-        "Falha ao carregar perfis. Verifique sua conexão e tente novamente."
-      );
+
+      if (list.length === 0) {
+        showWarning(
+          'Nenhum perfil encontrado. Crie um perfil primeiro na aba "Perfil".'
+        );
+      }
+    } catch (error) {
+      console.error("Erro ao carregar perfis:", error);
+      const errorMessage = getErrorMessage(error);
+
+      if (error instanceof NetworkError) {
+        setError({ message: errorMessage, type: "network" });
+      } else if (error instanceof APIError) {
+        setError({ message: errorMessage, type: "server" });
+      } else {
+        setError({ message: errorMessage, type: "general" });
+      }
     } finally {
       setRefreshing(false);
     }
@@ -37,15 +64,14 @@ export default function RecomendacaoScreen() {
 
   const onRefresh = () => {
     setRefreshing(true);
+    setError(null);
     loadProfiles();
   };
 
   async function gerarRecomendacao() {
     if (!profiles.length) {
-      Alert.alert(
-        "Perfil Necessário",
-        "Você precisa criar um perfil de investidor primeiro.\n\nVá para a aba 'Perfil' para criar seu perfil.",
-        [{ text: "OK", style: "default" }]
+      showWarning(
+        'Você precisa criar um perfil de investidor primeiro. Vá para a aba "Perfil" para criar seu perfil.'
       );
       return;
     }
@@ -56,17 +82,11 @@ export default function RecomendacaoScreen() {
         profiles[selectedProfileIndex] || profiles[profiles.length - 1];
       const r = await api.createRecommendation(profileToUse.id);
       setRec(r);
-      Alert.alert(
-        "Sucesso!",
-        "Recomendação personalizada gerada com base no seu perfil.",
-        [{ text: "Ver Recomendação", style: "default" }]
-      );
+      showSuccess("Recomendação personalizada gerada com base no seu perfil!");
     } catch (error) {
-      Alert.alert(
-        "Erro",
-        "Falha ao gerar recomendação. Verifique sua conexão e tente novamente."
-      );
       console.error("Erro ao gerar recomendação:", error);
+      const errorMessage = getErrorMessage(error);
+      showError(errorMessage);
     } finally {
       setLoading(false);
     }
@@ -204,6 +224,17 @@ export default function RecomendacaoScreen() {
       </View>
     </View>
   );
+
+  if (error) {
+    return (
+      <ErrorView
+        onRetry={loadProfiles}
+        message={error.message}
+        type={error.type}
+        title="Erro ao Carregar Dados"
+      />
+    );
+  }
 
   return (
     <ScrollView
@@ -359,6 +390,18 @@ export default function RecomendacaoScreen() {
       )}
 
       <View style={styles.bottomSpacer} />
+
+      {/* Renderizar toasts */}
+      {toasts.map((toast) => (
+        <Toast
+          key={toast.id}
+          message={toast.message}
+          type={toast.type}
+          visible={toast.visible}
+          duration={toast.duration}
+          onHide={() => hideToast(toast.id)}
+        />
+      ))}
     </ScrollView>
   );
 }

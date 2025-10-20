@@ -37,10 +37,10 @@ export default function HomeTabs() {
       })}
     >
       <Tab.Screen name="Início" component={HomeScreen} />
-      <Tab.Screen name="Perfil" component={PerfilScreen} />
       <Tab.Screen name="Recomendar" component={RecomendacaoScreen} />
       <Tab.Screen name="Explicações" component={ExplicacaoScreen} />
       <Tab.Screen name="Ajuda" component={AjudaScreen} />
+      <Tab.Screen name="Perfil" component={PerfilScreen} />
     </Tab.Navigator>
   );
 }

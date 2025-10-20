@@ -2,17 +2,30 @@ import React, { useState, useEffect } from "react";
 import {
   View,
   Text,
-  Alert,
   StyleSheet,
   ScrollView,
   TouchableOpacity,
   RefreshControl,
   Modal,
+  Alert,
 } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
-import { api, Profile } from "../services/api";
+import {
+  api,
+  Profile,
+  getErrorMessage,
+  NetworkError,
+  APIError,
+} from "../services/api";
+import { clearSession } from "../services/storage";
+import { useAuth } from "../../App";
+import ErrorView from "../components/ErrorView";
+import Toast from "../components/Toast";
+import ConfirmModal from "../components/ConfirmModal";
+import { useToast } from "../hooks/useToast";
 
 export default function PerfilScreen() {
+  const { session, setSession } = useAuth();
   const [suitability, setSuitability] = useState<
     "conservador" | "moderado" | "arrojado"
   >("moderado");
@@ -25,13 +38,30 @@ export default function PerfilScreen() {
   const [profiles, setProfiles] = useState<Profile[]>([]);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
+  const [loggingOut, setLoggingOut] = useState(false);
+  const [showLogoutModal, setShowLogoutModal] = useState(false);
+  const [error, setError] = useState<{
+    message: string;
+    type: "network" | "server" | "general";
+  } | null>(null);
+  const { toasts, showError, showSuccess, showWarning, hideToast } = useToast();
 
   const loadProfiles = async () => {
     try {
+      setError(null);
       const profilesList = await api.listProfiles();
       setProfiles(profilesList);
     } catch (error) {
       console.error("Erro ao carregar perfis:", error);
+      const errorMessage = getErrorMessage(error);
+
+      if (error instanceof NetworkError) {
+        setError({ message: errorMessage, type: "network" });
+      } else if (error instanceof APIError) {
+        setError({ message: errorMessage, type: "server" });
+      } else {
+        setError({ message: errorMessage, type: "general" });
+      }
     } finally {
       setLoading(false);
       setRefreshing(false);
@@ -44,27 +74,65 @@ export default function PerfilScreen() {
 
   const onRefresh = () => {
     setRefreshing(true);
+    setError(null);
     loadProfiles();
   };
 
+  const validateProfile = (): boolean => {
+    if (!suitability || !objetivo || !liquidez) {
+      showError("Por favor, preencha todos os campos do perfil");
+      return false;
+    }
+    return true;
+  };
+
   async function onSalvar() {
+    if (!validateProfile()) {
+      return;
+    }
+
     try {
       setSaving(true);
       const p = await api.createProfile({ suitability, objetivo, liquidez });
       setProfile(p);
-      Alert.alert("Sucesso!", `Perfil criado com sucesso!\nID: ${p.id}`, [
-        { text: "OK", onPress: () => loadProfiles() },
-      ]);
+      showSuccess(`Perfil criado com sucesso! ID: ${p.id}`);
+      loadProfiles();
     } catch (e: any) {
-      Alert.alert(
-        "Erro",
-        "Falha ao salvar perfil. Verifique sua conexão e tente novamente."
-      );
+      console.error("Erro ao salvar perfil:", e);
+      const errorMessage = getErrorMessage(e);
+      showError(errorMessage);
     } finally {
       setSaving(false);
     }
   }
 
+  const handleLogout = () => {
+    setShowLogoutModal(true);
+  };
+
+  const performLogout = async () => {
+    try {
+      setLoggingOut(true);
+
+      // Simular delay para mostrar loading
+      await new Promise((resolve) => setTimeout(resolve, 500));
+
+      await clearSession();
+      setShowLogoutModal(false);
+      showSuccess("Logout realizado com sucesso!");
+
+      // Pequeno delay para mostrar o toast
+      setTimeout(() => {
+        setSession(null);
+      }, 800);
+    } catch (error) {
+      console.error("Erro ao fazer logout:", error);
+      setShowLogoutModal(false);
+      showError("Erro ao fazer logout. Tente novamente.");
+    } finally {
+      setLoggingOut(false);
+    }
+  };
   const getSuitabilityInfo = (type: string) => {
     const info = {
       conservador: {
@@ -238,8 +306,20 @@ export default function PerfilScreen() {
   if (loading) {
     return (
       <View style={styles.loadingContainer}>
-        <Text style={styles.loadingText}>Carregando...</Text>
+        <Ionicons name="hourglass" size={24} color="#007AFF" />
+        <Text style={styles.loadingText}>Carregando perfis...</Text>
       </View>
+    );
+  }
+
+  if (error) {
+    return (
+      <ErrorView
+        onRetry={loadProfiles}
+        message={error.message}
+        type={error.type}
+        title="Erro ao Carregar Perfis"
+      />
     );
   }
 
@@ -256,12 +336,26 @@ export default function PerfilScreen() {
           <View style={styles.headerIcon}>
             <Ionicons name="person" size={32} color="white" />
           </View>
-          <View>
+          <View style={styles.headerTextContainer}>
             <Text style={styles.headerTitle}>Perfil do Investidor</Text>
             <Text style={styles.headerSubtitle}>
               Configure suas preferências de investimento
             </Text>
+            {session && (
+              <Text style={styles.userEmail}>Logado como: {session.email}</Text>
+            )}
           </View>
+          <TouchableOpacity
+            style={styles.logoutButton}
+            onPress={handleLogout}
+            disabled={loggingOut}
+          >
+            {loggingOut ? (
+              <Ionicons name="hourglass" size={20} color="white" />
+            ) : (
+              <Ionicons name="log-out-outline" size={20} color="white" />
+            )}
+          </TouchableOpacity>
         </View>
       </View>
 
@@ -401,6 +495,33 @@ export default function PerfilScreen() {
       </View>
 
       <View style={styles.bottomSpacer} />
+
+      {/* Modal de confirmação de logout */}
+      <ConfirmModal
+        visible={showLogoutModal}
+        title="Confirmar Logout"
+        message={`Tem certeza que deseja sair da conta ${session?.email}?\n\nTodos os dados locais serão mantidos.`}
+        confirmText="Sair"
+        cancelText="Cancelar"
+        confirmColor="#FF3B30"
+        icon="log-out-outline"
+        iconColor="#FF3B30"
+        onConfirm={performLogout}
+        onCancel={() => setShowLogoutModal(false)}
+        loading={loggingOut}
+      />
+
+      {/* Renderizar toasts */}
+      {toasts.map((toast) => (
+        <Toast
+          key={toast.id}
+          message={toast.message}
+          type={toast.type}
+          visible={toast.visible}
+          duration={toast.duration}
+          onHide={() => hideToast(toast.id)}
+        />
+      ))}
     </ScrollView>
   );
 }
@@ -416,10 +537,12 @@ const styles = StyleSheet.create({
     justifyContent: "center",
     alignItems: "center",
     backgroundColor: "#f8f9fa",
+    gap: 16,
   },
   loadingText: {
     fontSize: 16,
     color: "#666",
+    fontWeight: "500",
   },
   headerContainer: {
     backgroundColor: "#007AFF",
@@ -430,6 +553,7 @@ const styles = StyleSheet.create({
   headerContent: {
     flexDirection: "row",
     alignItems: "center",
+    justifyContent: "space-between",
   },
   headerIcon: {
     width: 60,
@@ -440,6 +564,9 @@ const styles = StyleSheet.create({
     alignItems: "center",
     marginRight: 16,
   },
+  headerTextContainer: {
+    flex: 1,
+  },
   headerTitle: {
     fontSize: 24,
     fontWeight: "bold",
@@ -449,6 +576,21 @@ const styles = StyleSheet.create({
   headerSubtitle: {
     fontSize: 14,
     color: "rgba(255, 255, 255, 0.9)",
+    marginBottom: 4,
+  },
+  userEmail: {
+    fontSize: 12,
+    color: "rgba(255, 255, 255, 0.8)",
+    fontStyle: "italic",
+  },
+  logoutButton: {
+    width: 44,
+    height: 44,
+    borderRadius: 22,
+    backgroundColor: "rgba(255, 255, 255, 0.2)",
+    justifyContent: "center",
+    alignItems: "center",
+    marginLeft: 12,
   },
   existingProfilesContainer: {
     padding: 20,
