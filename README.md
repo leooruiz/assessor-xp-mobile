@@ -61,10 +61,3 @@ npx expo start
 * Guilherme Alves de Lima — RM550433
 * Pedro Guerra — RM99526
 
----
-
-## Próximos passos
-
-* Melhorar validações de formulários.
-* Adicionar tratamento de erro mais rico (retry, banners).
-* Evoluir regra de recomendação na API.
